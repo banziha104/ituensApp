@@ -14,8 +14,8 @@ android {
         targetSdk 29
         versionCode 1
         versionName "1.0"
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
+        testInstrumentationRunner "com.lyj.ituensapp.ITunesTestRunner"
     }
 
     buildTypes {
@@ -42,6 +42,10 @@ android {
 
     buildFeatures {
         viewBinding true
+    }
+
+    hilt {
+        enableTransformForLocalTests = true
     }
 }
 
@@ -81,6 +85,10 @@ dependencies {
     implementation "com.squareup.retrofit2:converter-simplexml:$retrofitVersion"
     implementation "com.squareup.retrofit2:retrofit:$retrofitVersion"
 
+    // Paging
+    implementation "androidx.paging:paging-runtime-ktx:$pagingVersion"
+    implementation "androidx.paging:paging-rxjava3:$pagingVersion"
+
     //KTX
     implementation "androidx.core:core-ktx:$ktxCoreVersion"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$ktxViewModelVersion"
@@ -109,8 +117,12 @@ dependencies {
 
     // Test
     testImplementation "org.robolectric:robolectric:$robolectricVersion"
+    testImplementation "com.google.dagger:hilt-android-testing:$hiltVersion"
+    kaptTest "com.google.dagger:hilt-android-compiler:$hiltVersion"
     kaptAndroidTest "com.google.dagger:hilt-android-compiler:$hiltVersion"
     androidTestImplementation "com.google.dagger:hilt-android-testing:$hiltVersion"
+
+    testImplementation "androidx.paging:paging-common:$pagingVersion"
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$espressVersion"

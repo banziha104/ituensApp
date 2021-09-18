@@ -15,8 +15,7 @@ import retrofit2.Retrofit
 
 class ApiBase : ServiceGenerator {
     companion object {
-        const val BASE_URL = "https://www.coguri.shop"
-        const val ADDRESS_URL =  "$BASE_URL/geometry/address/index.html"
+        const val BASE_URL = "https://itunes.apple.com"
     }
 
     override fun <T> generateService(
