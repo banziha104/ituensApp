@@ -1,7 +1,6 @@
 package com.lyj.ituensapp.api.network
 
-import android.util.Log
-import com.lyj.ituensapp.api.network.base.ITunesService
+import com.lyj.ituensapp.api.network.api.ITunesService
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -38,7 +37,7 @@ class ITunesServiceTests {
             .awaitDone(3,TimeUnit.SECONDS)
             .assertComplete()
             .assertValue {
-                Log.d("lyj",it.toString())
+                println(it.toString())
                 it.resultCount != null
             }
     }

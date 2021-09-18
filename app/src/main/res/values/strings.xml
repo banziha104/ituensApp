@@ -8,4 +8,8 @@
     <string name="permission_dialog_positive_title">설정</string>
     <string name="permission_dialog_negative_title">종료</string>
 
+<!--    Main-->
+    <string name="main_list_tab_title">List</string>
+    <string name="main_favorite_tab_title">Favorite</string>
+
 </resources>

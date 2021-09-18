@@ -1,6 +1,6 @@
 package com.lyj.ituensapp.di.module
 
-import com.lyj.ituensapp.api.network.base.ITunesService
+import com.lyj.ituensapp.api.network.api.ITunesService
 import com.lyj.ituensapp.api.network.base.ServiceGenerator
 import dagger.Module
 import dagger.Provides

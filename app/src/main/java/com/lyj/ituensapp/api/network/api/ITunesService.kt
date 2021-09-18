@@ -1,4 +1,4 @@
-package com.lyj.ituensapp.api.network.base
+package com.lyj.ituensapp.api.network.api
 
 import com.lyj.ituensapp.api.network.domain.ituenes.search.ITuensSearchResponse
 import io.reactivex.rxjava3.core.Single
