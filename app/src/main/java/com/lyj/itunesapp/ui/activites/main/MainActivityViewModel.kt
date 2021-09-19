@@ -11,8 +11,10 @@ import com.lyj.itunesapp.api.database.entity.FavoriteTrackEntity
 import com.lyj.itunesapp.api.network.api.ITunesService
 import com.lyj.itunesapp.api.network.domain.ituenes.search.ITunesSearchResponse
 import com.lyj.itunesapp.api.network.domain.ituenes.search.ResultsItem
+import com.lyj.itunesapp.core.extension.android.unwrappedValue
 import com.lyj.itunesapp.core.extension.lang.SchedulerType
 import com.lyj.itunesapp.core.extension.lang.applyScheduler
+import com.lyj.itunesapp.exceptions.validation.NotMacthedTrackByTrackIdExeption
 import com.lyj.itunesapp.ui.adapter.CheckFavorite
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.rxjava3.core.Completable
@@ -52,8 +54,7 @@ class MainActivityViewModel @Inject constructor(
                 if (list.isNotEmpty() && list[0].id != null) {
                     favoriteDao.delete(list[0].id!!)
                 } else {
-                    val data = trackListLiveData.value?.first { it.trackId == trackId }
-                        ?: throw ClassNotFoundException()
+                    val data = trackListLiveData.unwrappedValue.firstOrNull { it.trackId == trackId } ?: throw NotMacthedTrackByTrackIdExeption()
                     favoriteDao.insert(FavoriteTrackEntity.fromResponse(data))
                 }
             }

@@ -19,6 +19,7 @@ import com.lyj.itunesapp.core.extension.lang.applyScheduler
 import com.lyj.itunesapp.databinding.ActivityMainBinding
 import com.lyj.itunesapp.exceptions.livedata.LiveDataNotInitializedException
 import com.lyj.itunesapp.exceptions.network.SearchResultsIsEmptyException
+import com.lyj.itunesapp.exceptions.validation.NotMacthedTrackByTrackIdExeption
 import com.lyj.itunesapp.ui.adapter.TrackAdapter
 import com.lyj.itunesapp.ui.adapter.TrackAdapterViewModel
 import com.trello.lifecycle4.android.lifecycle.AndroidLifecycle
@@ -48,6 +49,9 @@ class MainActivity : AppCompatActivity(), MainProgressController {
                 .flatMapCompletable { trackId ->
                     viewModel.favoriteInsertOrDelete(trackId)
                 }.subscribe({}, {
+                    if(it is NotMacthedTrackByTrackIdExeption){
+                        longToast(it.msg)
+                    }
                     it.printStackTrace()
                 })
         }
