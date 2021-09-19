@@ -122,7 +122,7 @@ data class FavoriteTrackEntity (
     companion object {
 
         // TODO : 코드량은 감소하지만, Acessible 문제, 성능 문제로 일단 보류
-//        fun fromResponse(response: ResultsItem){
+//        fun fromResponse(response: ResultsItem) : FavoriteTrackEntity{
 //            val favoriteTrackEntity  = FavoriteTrackEntity()
 //            val responseFields = response::class.java.declaredFields
 //
@@ -134,6 +134,7 @@ data class FavoriteTrackEntity (
 //                    favoriteField.set(favoriteTrackEntity,responseField.get(response))
 //                }
 //            }
+//            return favoriteTrackEntity
 //        }
 
         fun fromResponse(response : ResultsItem) : FavoriteTrackEntity = FavoriteTrackEntity(

@@ -11,6 +11,7 @@
     <!--    Main-->
     <string name="main_list_tab_title">List</string>
     <string name="main_favorite_tab_title">Favorite</string>
+    <string name="main_empty_favorite">즐겨찾기가 비어있습니다. List에서 별표를 눌러 즐겨찾기에 추가해주세요.</string>
 
     <!--    Database-->
     <string name="database_failed">데이터베이스를 읽어오는데 실패하였습니다</string>

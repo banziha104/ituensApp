@@ -8,7 +8,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.MutableLiveData
 import com.lyj.itunesapp.R
 import com.lyj.itunesapp.api.database.ITunesDataBase
-import com.lyj.itunesapp.api.database.dao.FavoriteDao
 import com.lyj.itunesapp.api.database.entity.FavoriteTrackEntity
 import com.lyj.itunesapp.api.network.api.ITunesService
 import com.lyj.itunesapp.api.network.domain.ituenes.search.ITunesSearchResponse
@@ -23,8 +22,9 @@ import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
-import java.lang.NullPointerException
 import javax.inject.Inject
+
+typealias OffSet = Int
 
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
@@ -42,6 +42,10 @@ class MainActivityViewModel @Inject constructor(
 
     val trackListLiveData: MutableLiveData<MutableList<ResultsItem>> by lazy {
         MutableLiveData<MutableList<ResultsItem>>(mutableListOf())
+    }
+
+    val offsetLiveData : MutableLiveData<OffSet> by lazy {
+        MutableLiveData<OffSet>(ITunesService.currentOffset)
     }
 
     fun favoriteInsertOrDelete(trackId: Int): Completable =
@@ -74,21 +78,18 @@ class MainActivityViewModel @Inject constructor(
 
 
     fun initializeData(
-        provider: LifecycleProvider<Lifecycle.Event>,
         progressController: MainProgressController
     ): Single<Pair<ITunesSearchResponse, List<FavoriteTrackEntity>>> =
         Single.zip(
-            requestITunesData(ITunesService.currentOffset)
-                .bindToLifecycle(provider),
+            requestITunesData(ITunesService.currentOffset),
             findAllFavoriteOnce()
-                .bindToLifecycle(provider),
         ) { trackResponse, favoriteList ->
             trackResponse to favoriteList
         }
             .applyScheduler(SchedulerType.IO, SchedulerType.MAIN)
             .doOnSubscribe { progressController.showProgress() }
-            .doOnSuccess { progressController.stopProgress() }
-            .doOnError { progressController.stopProgress() }
+            .doOnSuccess { progressController.hideProgress() }
+            .doOnError { progressController.hideProgress() }
             .observeOn(Schedulers.io())
 
     fun trackCheckFavorite(favorites : List<FavoriteTrackEntity>) : CheckFavorite = CheckFavorite{ trackId ->

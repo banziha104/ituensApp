@@ -18,6 +18,7 @@ import com.lyj.itunesapp.core.extension.android.selectedObserver
 import com.lyj.itunesapp.core.extension.lang.SchedulerType
 import com.lyj.itunesapp.core.extension.lang.applyScheduler
 import com.lyj.itunesapp.core.extension.lang.mapTag
+import com.lyj.itunesapp.core.extension.lang.simpleTag
 import com.lyj.itunesapp.databinding.ActivityMainBinding
 import com.lyj.itunesapp.ui.adapter.CheckFavorite
 import com.lyj.itunesapp.ui.adapter.TrackAdapter
@@ -76,16 +77,30 @@ class MainActivity : AppCompatActivity(), MainProgressController {
             .apply {
                 adapter = trackAdapter
                 layoutManager = LinearLayoutManager(this@MainActivity)
-//                scrollEvents()
-//                    .bindToLifecycle(provider)
-//                    .filter { !it.view.canScrollVertically(1) && currentTabType == MainTabType.LIST }
-//                    .throttleFirst(1, TimeUnit.SECONDS)
-//                    .switchMapSingle {
-//                        viewModel.requestITunesData(ITunesService.currentOffset + ITunesService.LIMIT)
-//                    }
-//                    .subscribe {
-//
-//                    }
+                scrollEvents()
+                    .bindToLifecycle(provider)
+                    .filter { !it.view.canScrollVertically(1) && currentTabType == MainTabType.LIST }
+                    .throttleFirst(1, TimeUnit.SECONDS)
+                    .applyScheduler(subscribeOn = SchedulerType.MAIN,observeOn = SchedulerType.IO)
+                    .switchMapSingle {
+                        viewModel.requestITunesData(viewModel.offsetLiveData.value!! + ITunesService.LIMIT)
+                    }
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .doOnNext { showProgress() }
+                    .subscribe ({
+                        val results = it.results?.filterNotNull()
+                        if (results != null && results.isNotEmpty()){
+                            val trackList = viewModel.trackListLiveData.value!!
+                            trackList.addAll(results)
+                            trackList.distinct()
+                            viewModel.trackListLiveData.value = trackList
+                        }
+                        viewModel.offsetLiveData.postValue(viewModel.offsetLiveData.value!! + ITunesService.LIMIT)
+                        hideProgress()
+                    },{
+                        hideProgress()
+                        it.printStackTrace()
+                    })
             }
     }
 
@@ -98,7 +113,7 @@ class MainActivity : AppCompatActivity(), MainProgressController {
 
     private fun observeInitializeData() {
         viewModel
-            .initializeData(provider, this)
+            .initializeData(this)
             .bindToLifecycle(provider)
             .subscribe({ (trackResponse, favoriteList) ->
                 val results = trackResponse.results
@@ -138,9 +153,6 @@ class MainActivity : AppCompatActivity(), MainProgressController {
             { type, favorite, trackList -> Triple(type, favorite, trackList) })
             .applyScheduler(subscribeOn = SchedulerType.MAIN, observeOn = SchedulerType.MAIN)
             .subscribe({ (type, favorites, trackList) ->
-
-                currentTabType = type
-
                 when (type) {
                     MainTabType.LIST -> {
                         binding
@@ -150,10 +162,15 @@ class MainActivity : AppCompatActivity(), MainProgressController {
                                     trackList,
                                     viewModel.trackCheckFavorite(favorites)
                                 )
+                                // TODO : 최적화로 동작은 하나, Favorite 클릭시 버튼이 갱신이 안되어서 전체 notify
                                 trackAdapter.notifyDataSetChanged()
+//                                trackAdapter.notifyItemRangeChanged(viewModel.offsetLiveData.value!!,ITunesService.LIMIT)
                             }
                     }
                     MainTabType.FAVORITE -> {
+                        if (favorites.isEmpty()){
+                            longToast(R.string.main_empty_favorite)
+                        }
                         binding
                             .mainRecyclerView
                             .apply {
@@ -174,7 +191,7 @@ class MainActivity : AppCompatActivity(), MainProgressController {
         binding.mainProgressBar.visibility = View.VISIBLE
     }
 
-    override fun stopProgress() {
+    override fun hideProgress() {
         binding.mainProgressBar.visibility = View.GONE
     }
 
@@ -182,7 +199,7 @@ class MainActivity : AppCompatActivity(), MainProgressController {
 
 interface MainProgressController {
     fun showProgress()
-    fun stopProgress()
+    fun hideProgress()
 }
 
 
