@@ -2,11 +2,9 @@ package com.lyj.itunesapp.ui.activites.main
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.activity.viewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.jakewharton.rxbinding4.recyclerview.scrollEvents
 import com.lyj.itunesapp.R
@@ -15,23 +13,20 @@ import com.lyj.itunesapp.api.network.api.ITunesService
 import com.lyj.itunesapp.api.network.domain.ituenes.search.ResultsItem
 import com.lyj.itunesapp.core.extension.android.longToast
 import com.lyj.itunesapp.core.extension.android.selectedObserver
+import com.lyj.itunesapp.core.extension.android.unwrappedValue
 import com.lyj.itunesapp.core.extension.lang.SchedulerType
 import com.lyj.itunesapp.core.extension.lang.applyScheduler
-import com.lyj.itunesapp.core.extension.lang.mapTag
-import com.lyj.itunesapp.core.extension.lang.simpleTag
 import com.lyj.itunesapp.databinding.ActivityMainBinding
-import com.lyj.itunesapp.ui.adapter.CheckFavorite
+import com.lyj.itunesapp.exceptions.livedata.LiveDataNotInitializedException
+import com.lyj.itunesapp.exceptions.network.SearchResultsIsEmptyException
 import com.lyj.itunesapp.ui.adapter.TrackAdapter
 import com.lyj.itunesapp.ui.adapter.TrackAdapterViewModel
-import com.lyj.itunesapp.ui.adapter.TrackDataGettable
 import com.trello.lifecycle4.android.lifecycle.AndroidLifecycle
 import com.trello.rxlifecycle4.LifecycleProvider
 import com.trello.rxlifecycle4.kotlin.bindToLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.kotlin.Observables
-import okhttp3.internal.notifyAll
 import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
@@ -45,7 +40,7 @@ class MainActivity : AppCompatActivity(), MainProgressController {
         TrackAdapterViewModel(
             this,
             listOf(),
-            viewModel.trackCheckFavorite(viewModel.favoriteListLiveData.value ?: listOf())
+            viewModel.trackCheckFavorite(viewModel.favoriteListLiveData.unwrappedValue)
         ) { observable ->
             observable
                 .bindToLifecycle(provider)
@@ -62,7 +57,7 @@ class MainActivity : AppCompatActivity(), MainProgressController {
         TrackAdapter(adapterViewModel)
     }
 
-    private var currentTabType : MainTabType = MainTabType.LIST
+    private var currentTabType: MainTabType = MainTabType.LIST
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,30 +72,6 @@ class MainActivity : AppCompatActivity(), MainProgressController {
             .apply {
                 adapter = trackAdapter
                 layoutManager = LinearLayoutManager(this@MainActivity)
-                scrollEvents()
-                    .bindToLifecycle(provider)
-                    .filter { !it.view.canScrollVertically(1) && currentTabType == MainTabType.LIST }
-                    .throttleFirst(1, TimeUnit.SECONDS)
-                    .applyScheduler(subscribeOn = SchedulerType.MAIN,observeOn = SchedulerType.IO)
-                    .switchMapSingle {
-                        viewModel.requestITunesData(viewModel.offsetLiveData.value!! + ITunesService.LIMIT)
-                    }
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .doOnNext { showProgress() }
-                    .subscribe ({
-                        val results = it.results?.filterNotNull()
-                        if (results != null && results.isNotEmpty()){
-                            val trackList = viewModel.trackListLiveData.value!!
-                            trackList.addAll(results)
-                            trackList.distinct()
-                            viewModel.trackListLiveData.value = trackList
-                        }
-                        viewModel.offsetLiveData.postValue(viewModel.offsetLiveData.value!! + ITunesService.LIMIT)
-                        hideProgress()
-                    },{
-                        hideProgress()
-                        it.printStackTrace()
-                    })
             }
     }
 
@@ -109,6 +80,41 @@ class MainActivity : AppCompatActivity(), MainProgressController {
         observeInitializeData()
         observeBottomNavigation()
         observeDataChange()
+        observeScrollEvent()
+    }
+
+    private fun observeScrollEvent() {
+        binding
+            .mainRecyclerView
+            .scrollEvents()
+            .bindToLifecycle(provider)
+            .filter { !it.view.canScrollVertically(1) && currentTabType == MainTabType.LIST }
+            .throttleFirst(1, TimeUnit.SECONDS)
+            .applyScheduler(subscribeOn = SchedulerType.MAIN, observeOn = SchedulerType.IO)
+            .switchMapSingle {
+                viewModel.requestITunesData(viewModel.offsetLiveData.unwrappedValue + ITunesService.LIMIT)
+            }
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnNext { showProgress() }
+            .subscribe({
+                val results = it.results?.filterNotNull()
+                if (results != null && results.isNotEmpty() && it.resultCount != 0) {
+                    val trackList = viewModel.trackListLiveData.unwrappedValue
+                    trackList.addAll(results)
+                    trackList.distinct()
+                    viewModel.trackListLiveData.value = trackList
+                    viewModel.offsetLiveData.postValue(viewModel.offsetLiveData.unwrappedValue + ITunesService.LIMIT)
+                }else{
+                    longToast(R.string.main_empty_api_results)
+                }
+                hideProgress()
+            }, {
+                if (it is LiveDataNotInitializedException){
+                    longToast(it.msg)
+                }
+                hideProgress()
+                it.printStackTrace()
+            })
     }
 
     private fun observeInitializeData() {
@@ -120,10 +126,13 @@ class MainActivity : AppCompatActivity(), MainProgressController {
                 if (results != null && results.isNotEmpty()) {
                     viewModel.trackListLiveData.postValue(results.filterNotNull().toMutableList())
                 } else {
-
+                    throw SearchResultsIsEmptyException()
                 }
                 viewModel.favoriteListLiveData.postValue(favoriteList)
             }, {
+                if(it is SearchResultsIsEmptyException){
+                    longToast(it.msg)
+                }
                 it.printStackTrace()
             })
     }
@@ -168,7 +177,7 @@ class MainActivity : AppCompatActivity(), MainProgressController {
                             }
                     }
                     MainTabType.FAVORITE -> {
-                        if (favorites.isEmpty()){
+                        if (favorites.isEmpty()) {
                             longToast(R.string.main_empty_favorite)
                         }
                         binding
