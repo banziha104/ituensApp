@@ -1,7 +1,9 @@
 package com.lyj.itunesapp.core.extension.android
 
 import android.app.Activity
+import android.content.Context
 import android.graphics.drawable.Drawable
+import android.widget.Toast
 import androidx.annotation.ColorRes
 import androidx.annotation.DimenRes
 import androidx.annotation.DrawableRes
@@ -11,7 +13,6 @@ import androidx.core.content.ContextCompat
 fun Activity.resString(
     @StringRes resId: Int
 ): String = applicationContext.getString(resId)
-
 
 fun Activity.resDimen(
     @DimenRes resId: Int

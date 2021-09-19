@@ -1,6 +1,7 @@
 package com.lyj.itunesapp.api.network.domain.ituenes.search
 
 import com.google.gson.annotations.SerializedName
+import com.lyj.itunesapp.ui.adapter.CheckFavorite
 import com.lyj.itunesapp.ui.adapter.TrackData
 import com.lyj.itunesapp.ui.adapter.TrackDataGettable
 
@@ -120,11 +121,12 @@ data class ResultsItem(
 	@field:SerializedName("collectionArtistViewUrl")
 	val collectionArtistViewUrl: String? = null
 ) : TrackDataGettable{
-	override fun getTrackDataGettable(): TrackData = TrackData(
+	override fun getTrackDataGettable(checkFavorite: CheckFavorite): TrackData = TrackData(
+		trackId,
 		trackName,
 		collectionName,
 		artistName,
 		artworkUrl60,
-		null
+		checkFavorite.invoke(trackId)
 	)
 }

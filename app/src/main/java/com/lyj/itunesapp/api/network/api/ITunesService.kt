@@ -10,7 +10,12 @@ interface ITunesService {
     fun searchITunesList(
         @Query("term") term : String = "greenday",
         @Query("entity") entity : String = "song",
-        @Query("limit") limit : Int = 30,
-        @Query("offset") offset : Int = 0,
+        @Query("limit") limit : Int = LIMIT,
+        @Query("offset") offset : Int = currentOffset,
     ) : Single<ITunesSearchResponse>
+
+    companion object{
+        const val LIMIT = 30
+        var currentOffset = 0
+    }
 }

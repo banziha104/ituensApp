@@ -2,7 +2,7 @@ package com.lyj.itunesapp.core.extension.android
 
 import android.content.Context
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.lyj.itunesapp.ui.main.MainTabType
+import com.lyj.itunesapp.ui.activites.main.MainTabType
 import io.reactivex.rxjava3.core.Observable
 
 fun BottomNavigationView.selectedObserver(context: Context, default : MainTabType? = null) : Observable<MainTabType> = Observable.create { emitter ->

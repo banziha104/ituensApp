@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.lyj.itunesapp.api.network.domain.ituenes.search.ResultsItem
+import com.lyj.itunesapp.ui.adapter.CheckFavorite
 import com.lyj.itunesapp.ui.adapter.TrackData
 import com.lyj.itunesapp.ui.adapter.TrackDataGettable
 
@@ -72,7 +73,7 @@ data class FavoriteTrackEntity (
     @ColumnInfo(name = "kind")
     val kind: String? = null,
 
-    @ColumnInfo(name = "trackId")
+    @ColumnInfo(name = "track_id")
     val trackId: Int? = null,
 
     @ColumnInfo(name = "collection_price")
@@ -175,11 +176,12 @@ data class FavoriteTrackEntity (
         )
     }
 
-    override fun getTrackDataGettable(): TrackData = TrackData(
+    override fun getTrackDataGettable(checkFavorite: CheckFavorite): TrackData = TrackData(
+        trackId,
         trackName,
         collectionName,
         artistName,
         artworkUrl60,
-        null
+        checkFavorite.invoke(trackId)
     )
 }
